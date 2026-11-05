@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>El Semáforo de Evidencias - Votación en Vivo</title>
+  <meta name="description" content="Herramienta interactiva para aprender a distinguir entre intenciones y evidencias reales en talleres y presentaciones.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --text: #0b1b3a;
+      --text-muted: #52637a;
+      --navy: #0b1b3a;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --green: #10b981;
+      --radius: 20px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1b3a;
+        --card-bg: #13264d;
+        --card-border: rgba(255, 255, 255, 0.12);
+        --text: #f8fafc;
+        --text-muted: #94a3b8;
+      }
+    }
+    html.dark {
+      --bg: #0b1b3a;
+      --card-bg: #13264d;
+      --card-border: rgba(255, 255, 255, 0.12);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    html.light {
+      --bg: #f3f6fb;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --text: #0b1b3a;
+      --text-muted: #52637a;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      line-height: 1.5;
+    }
+    header {
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .brand {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--green);
+      cursor: pointer;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .badge.cloud {
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border-color: rgba(99, 102, 241, 0.3);
+    }
+    .badge.local {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--amber);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .main-layout {
+      flex: 1;
+      max-width: 1080px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 7rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .main-layout {
+        flex-direction: row;
+        align-items: flex-start;
+        padding-top: 2.5rem;
+      }
+    }
+    /* SEMAFORO */
+    .semaforo-box {
+      background: #091326;
+      border: 2px solid #20355f;
+      border-radius: 24px;
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.25rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+      margin: 0 auto;
+      width: fit-content;
+      flex-shrink: 0;
+    }
+    @media (min-width: 768px) {
+      .semaforo-box {
+        flex-direction: column;
+        padding: 1.5rem 1.25rem;
+      }
+    }
+    .light-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .light {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      position: relative;
+      transition: all 0.3s ease;
+      background: #111e38;
+      opacity: 0.35;
+    }
+    @media (min-width: 768px) {
+      .light {
+        width: 74px;
+        height: 74px;
+      }
+    }
+    .light.red.active {
+      background: var(--red);
+      opacity: 1;
+      border-color: #fca5a5;
+      box-shadow: 0 0 32px rgba(239, 68, 68, 0.9);
+      animation: blinkRed 0.8s ease-in-out 2;
+    }
+    .light.amber.active {
+      background: var(--amber);
+      opacity: 1;
+      border-color: #fde68a;
+      box-shadow: 0 0 32px rgba(245, 158, 11, 0.9);
+      animation: pulseLight 1.8s infinite;
+    }
+    .light.green.active {
+      background: var(--green);
+      opacity: 1;
+      border-color: #a7f3d0;
+      box-shadow: 0 0 32px rgba(16, 185, 129, 0.9);
+    }
+    @keyframes blinkRed {
+      0%, 100% { opacity: 1; filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.9)); }
+      50% { opacity: 0.2; }
+    }
+    @keyframes pulseLight {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .light.red.active, .light.amber.active {
+        animation: none !important;
+      }
+    }
+    .light-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+    /* STAGE CARD */
+    .stage-card {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 1.75rem 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    @media (min-width: 768px) {
+      .stage-card {
+        padding: 2.5rem;
+      }
+    }
+    .stage-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6366f1;
+      background: rgba(99, 102, 241, 0.1);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+    }
+    .phrase-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    @media (min-width: 768px) {
+      .phrase-title {
+        font-size: 2.2rem;
+      }
+    }
+    .explanation-box {
+      background: rgba(99, 102, 241, 0.08);
+      border-left: 4px solid #6366f1;
+      padding: 1.25rem;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    /* VOTE BUTTONS */
+    .vote-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    @media (min-width: 600px) {
+      .vote-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .vote-btn {
+      min-height: 72px;
+      padding: 1rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      border-radius: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      transition: all 0.2s ease;
+      border: 2px solid transparent;
+      user-select: none;
+    }
+    .vote-btn:active {
+      transform: scale(0.97);
+    }
+    .btn-evidencia {
+      background: #10b981;
+      color: white;
+    }
+    .btn-evidencia:hover {
+      background: #059669;
+    }
+    .btn-evidencia.selected {
+      border-color: #ffffff;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.5);
+    }
+    .btn-intencion {
+      background: #ef4444;
+      color: white;
+    }
+    .btn-intencion:hover {
+      background: #dc2626;
+    }
+    .btn-intencion.selected {
+      border-color: #ffffff;
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.5);
+    }
+    /* RESULTS BARS */
+    .results-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .bar-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .bar-meta {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .bar-track {
+      height: 28px;
+      background: rgba(0, 0, 0, 0.08);
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+    }
+    .dark .bar-track {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.5s ease;
+    }
+    .bar-fill.evidencia {
+      background: #10b981;
+    }
+    .bar-fill.intencion {
+      background: #ef4444;
+    }
+    /* PROPOSAL INPUT */
+    .proposal-area {
+      width: 100%;
+      min-height: 120px;
+      padding: 1rem;
+      font-family: inherit;
+      font-size: 1.05rem;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text);
+      resize: vertical;
+    }
+    .proposal-area:focus {
+      outline: 2px solid #6366f1;
+    }
+    /* FIXED HOST BOTTOM BAR */
+    .host-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #091326;
+      border-top: 1px solid #20355f;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      z-index: 50;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.4);
+    }
+    .host-btn {
+      min-height: 44px;
+      padding: 0.5rem 1.15rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+      background: #1b2d52;
+      color: #f8fafc;
+    }
+    .host-btn:hover {
+      background: #273e6d;
+    }
+    .host-btn.primary {
+      background: #6366f1;
+      color: white;
+    }
+    .host-btn.primary:hover {
+      background: #4f46e5;
+    }
+    .host-btn.danger {
+      background: #7f1d1d;
+      color: #fecaca;
+    }
+    .host-btn.danger.confirming {
+      background: #ef4444;
+      color: white;
+      animation: pulse 1s infinite;
+    }
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 100;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal-body {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      max-width: 480px;
+      width: 100%;
+      padding: 2rem;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+    .qr-container {
+      display: flex;
+      justify-content: center;
+      padding: 1rem;
+      background: white;
+      border-radius: 14px;
+      margin: 0 auto;
+    }
+    .copy-input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .copy-input {
+      flex: 1;
+      padding: 0.6rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="?" class="brand">
+      <span>🚦 El Semáforo de Evidencias</span>
+    </a>
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <button id="syncBadge" class="badge cloud" title="Haz clic para ver o configurar base de datos">
+        <span class="badge-dot"></span>
+        <span id="syncBadgeText">Conectando…</span>
+      </button>
+      <button id="themeToggleBtn" style="min-height:36px; padding:0 0.6rem; border-radius:8px; border:1px solid var(--card-border); background:var(--card-bg); color:var(--text); cursor:pointer;">🌓</button>
+      <button id="hostLoginBtn" style="min-height:36px; padding:0 0.8rem; border-radius:8px; border:none; background:#6366f1; color:white; font-weight:700; cursor:pointer;">Anfitrión</button>
+    </div>
+  </header>
+
+  <main class="main-layout">
+    <div class="semaforo-box" id="semaforoElement">
+      <div class="light-item">
+        <div class="light red" id="lightRed"></div>
+        <span class="light-label">Rojo</span>
+      </div>
+      <div class="light-item">
+        <div class="light amber" id="lightAmber"></div>
+        <span class="light-label">Ámbar</span>
+      </div>
+      <div class="light-item">
+        <div class="light green" id="lightGreen"></div>
+        <span class="light-label">Verde</span>
+      </div>
+    </div>
+
+    <section class="stage-card" id="stageCard">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="stage-tag" id="stageTag">Fase 0 · Preparados</span>
+        <span id="voterCount" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Participantes: 0</span>
+      </div>
+
+      <h1 class="phrase-title" id="stageTitle">Esperando al presentador…</h1>
+
+      <div id="stageContent"></div>
+
+      <div id="voterFeedback" style="display: none; padding: 0.75rem 1rem; border-radius: 10px; background: rgba(16, 185, 129, 0.15); color: var(--green); font-weight: 700; text-align: center;">
+        ✓ Tu voto ha sido registrado. Puedes cambiarlo mientras la votación siga abierta.
+      </div>
+    </section>
+  </main>
+
+  <footer class="host-bar" id="hostBar" style="display: none;">
+    <button class="host-btn" id="btnPrev">← Atrás</button>
+    <button class="host-btn primary" id="btnNext">Siguiente →</button>
+    <button class="host-btn" id="btnExample" style="display: none;">💡 Mostrar ejemplo</button>
+    <button class="host-btn" id="btnInvite">📱 Invitar (QR)</button>
+    <button class="host-btn danger" id="btnReset">🔄 Reiniciar</button>
+  </footer>
+
+  <!-- QR MODAL -->
+  <div class="modal-overlay" id="qrModal">
+    <div class="modal-body">
+      <button class="close-btn" id="closeQrModal">&times;</button>
+      <h2 style="font-size: 1.3rem; font-weight: 800;">Invitar al público</h2>
+      <p style="font-size: 0.95rem; color: var(--text-muted);">
+        El público debe escanear este código QR con su celular para votar en tiempo real:
+      </p>
+      <div class="qr-container" id="qrCodeTarget"></div>
+      <div class="copy-input-row">
+        <input type="text" class="copy-input" id="inviteUrlInput" readonly>
+        <button class="host-btn primary" id="btnCopyLink">Copiar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DB CONFIG MODAL -->
+  <div class="modal-overlay" id="dbModal">
+    <div class="modal-body" style="max-width: 520px;">
+      <button class="close-btn" id="closeDbModal">&times;</button>
+      <h2 style="font-size: 1.25rem; font-weight: 800;">Estado de Sincronización</h2>
+      <p style="font-size: 0.9rem; color: var(--text-muted);">
+        Esta app sincroniza en tiempo real todos los celulares y computadoras a través de la nube.
+      </p>
+      <div id="dbStatusAlert" style="padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; background: rgba(99,102,241,0.1); color: #6366f1;">
+        ● Sincronización en la Nube Activa (Cross-Device)
+      </div>
+      <div>
+        <label style="font-size:0.8rem; font-weight:700; display:block; margin-bottom:0.3rem;">Pegar Firebase Config (Opcional):</label>
+        <textarea id="firebaseConfigInput" style="width:100%; min-height:90px; font-family:monospace; font-size:0.75rem; padding:0.5rem; border-radius:8px; border:1px solid var(--card-border); background:var(--bg); color:var(--text);" placeholder='{"apiKey":"AIza...", "projectId":"semaforo"}'></textarea>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+        <button class="host-btn" id="btnCancelDb">Cerrar</button>
+        <button class="host-btn primary" id="btnSaveDb">Guardar y Conectar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+  <script type="module">
+    // --- ESTADO Y CONFIGURACIÓN ---
+    const BAKED_FIREBASE_CONFIG = null;
+
+    const PHASES = [
+      { id: 0, tag: "Fase 0 · Preparados", light: "off", title: "Esperando al presentador…", desc: "La dinámica comenzará en breve. Mantén esta pantalla abierta en tu celular." },
+      { id: 1, tag: "Fase 1 · Frase 1", light: "amber", title: "“Hacer una feria de ropa”", question: "¿Esto describe una evidencia real o solo una intención?", isVote: true, key: "votoFrase1" },
+      { id: 2, tag: "Fase 2 · Resultado 1", light: "red", title: "“Hacer una feria de ropa”", verdict: "Solo una intención", reason: "Es lo que el grupo planea hacer, no una prueba de que algo cambió.", isResult: true, key: "votoFrase1" },
+      { id: 3, tag: "Fase 3 · Frase 2", light: "amber", title: "“Hemos logrado reducir el consumo”", question: "¿Esto describe una evidencia real o una afirmación prematura/falsa?", isVote: true, key: "votoFrase2" },
+      { id: 4, tag: "Fase 4 · Resultado 2", light: "red", title: "“Hemos logrado reducir el consumo”", verdict: "Falso / Prematuro", reason: "El proyecto aún no se ha ejecutado. No se puede haber reducido nada que todavía no empezó.", isResult: true, key: "votoFrase2" },
+      { id: 5, tag: "Fase 5 · Luz Verde", light: "green", title: "¿Qué indicador medible propondrías para demostrar, después de la feria, que sí consiguieron algo?", isProposal: true }
+    ];
+
+    let session = { fase: 0, ronda: 1, mostrarEjemplo: false };
+    let votes = {};
+    let userId = localStorage.getItem('sem_uid') || ('usr_' + Math.random().toString(36).substr(2, 8));
+    localStorage.setItem('sem_uid', userId);
+
+    const isHost = new URLSearchParams(window.location.search).get('host') === '1234' || sessionStorage.getItem('sem_host') === 'true';
+
+    // Generar sala única por dominio para evitar cruces
+    const roomParam = new URLSearchParams(window.location.search).get('room');
+    const roomId = roomParam ? ('semaforo_' + roomParam) : ('semaforo_sala_' + window.location.hostname.replace(/[^a-zA-Z0-9]/g, '_'));
+
+    // Elementos DOM
+    const lightRed = document.getElementById('lightRed');
+    const lightAmber = document.getElementById('lightAmber');
+    const lightGreen = document.getElementById('lightGreen');
+    const stageTag = document.getElementById('stageTag');
+    const stageTitle = document.getElementById('stageTitle');
+    const stageContent = document.getElementById('stageContent');
+    const voterCount = document.getElementById('voterCount');
+    const hostBar = document.getElementById('hostBar');
+    const voterFeedback = document.getElementById('voterFeedback');
+    const btnExample = document.getElementById('btnExample');
+    const qrModal = document.getElementById('qrModal');
+    const syncBadge = document.getElementById('syncBadge');
+    const syncBadgeText = document.getElementById('syncBadgeText');
+
+    if (isHost) {
+      hostBar.style.display = 'flex';
+      document.getElementById('hostLoginBtn').innerText = 'Modo Anfitrión Activo';
+      document.getElementById('hostLoginBtn').style.background = '#10b981';
+    }
+
+    // --- SINCRONIZACIÓN EN TIEMPO REAL (NUBE / FIREBASE / LOCAL) ---
+    let syncMode = 'local';
+    let mqttClient = null;
+
+    function setBadge(type, text) {
+      syncMode = type;
+      syncBadge.className = 'badge ' + type;
+      syncBadgeText.innerText = text;
+    }
+
+    // 1. Intentar Firebase Firestore si hay credenciales
+    async function initFirebaseFirestore(cfg) {
+      try {
+        const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js');
+        const { getFirestore, doc, onSnapshot, setDoc, collection } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
+
+        const app = initializeApp(cfg, 'standalone-sem');
+        const db = getFirestore(app);
+
+        setBadge('green', '● Firebase Conectado');
+
+        // Escuchar estado
+        onSnapshot(doc(db, 'semaforo_estado', 'sesion_actual'), (snap) => {
+          if (snap.exists()) {
+            session = snap.data();
+            render();
+          } else if (isHost) {
+            setDoc(doc(db, 'semaforo_estado', 'sesion_actual'), session);
+          }
+        });
+
+        // Escuchar votos
+        onSnapshot(collection(db, 'semaforo_votos'), (snap) => {
+          const m = {};
+          snap.forEach(d => { m[d.id] = d.data(); });
+          votes = m;
+          render();
+        });
+
+        window.dbWriteState = (st) => setDoc(doc(db, 'semaforo_estado', 'sesion_actual'), st, { merge: true });
+        window.dbWriteVote = (vt) => setDoc(doc(db, 'semaforo_votos', userId), vt, { merge: true });
+        return true;
+      } catch(e) {
+        console.warn('Firebase init error', e);
+        return false;
+      }
+    }
+
+    // 2. Conexión de Nube Instantánea (Cross-Device WebSocket MQTT)
+    function initCloudBroker() {
+      if (!window.Paho || !window.Paho.MQTT) {
+        setTimeout(initCloudBroker, 250);
+        return;
+      }
+      try {
+        const cid = 'cl_' + Math.random().toString(36).substr(2, 9);
+        mqttClient = new window.Paho.MQTT.Client('broker.hivemq.com', 8884, cid);
+
+        mqttClient.onMessageArrived = (msg) => {
+          try {
+            const p = JSON.parse(msg.payloadString);
+            if (p.type === 'SESSION') {
+              session = p.data;
+              render();
+            } else if (p.type === 'VOTE') {
+              votes[p.data.userId] = p.data;
+              render();
+            } else if (p.type === 'RESET') {
+              session = p.data;
+              votes = {};
+              render();
+            }
+          } catch(e) {}
+        };
+
+        mqttClient.onConnectionLost = () => {
+          setBadge('local', '● Reconectando Nube…');
+          setTimeout(initCloudBroker, 3000);
+        };
+
+        mqttClient.connect({
+          useSSL: true,
+          timeout: 4,
+          keepAliveInterval: 30,
+          onSuccess: () => {
+            setBadge('cloud', '● Nube Conectada (Tiempo Real)');
+            mqttClient.subscribe(roomId + '/#', { qos: 1 });
+            if (isHost) {
+              publishCloud('SESSION', session, true);
+            }
+          },
+          onFailure: () => {
+            setBadge('local', '● Modo Local (Pestañas)');
+          }
+        });
+      } catch(e) {
+        setBadge('local', '● Modo Local');
+      }
+    }
+
+    function publishCloud(type, data, retain = false) {
+      if (mqttClient && mqttClient.isConnected && mqttClient.isConnected()) {
+        try {
+          const m = new window.Paho.MQTT.Message(JSON.stringify({ type, data }));
+          m.destinationName = roomId + '/' + (type === 'VOTE' ? 'vote' : 'state');
+          m.qos = 1;
+          m.retained = retain;
+          mqttClient.send(m);
+        } catch(e) {}
+      }
+    }
+
+    // BroadcastChannel local de respaldo
+    const localChannel = window.BroadcastChannel ? new BroadcastChannel('semaforo_channel') : null;
+    if (localChannel) {
+      localChannel.onmessage = (e) => {
+        if (syncMode === 'local') {
+          if (e.data.type === 'SESSION') { session = e.data.data; render(); }
+          else if (e.data.type === 'VOTE') { votes[e.data.data.userId] = e.data.data; render(); }
+          else if (e.data.type === 'RESET') { session = e.data.data; votes = {}; render(); }
+        }
+      };
+    }
+
+    // Iniciar conexión
+    let savedFb = null;
+    try {
+      savedFb = BAKED_FIREBASE_CONFIG || JSON.parse(localStorage.getItem('sem_fb_cfg') || 'null');
+    } catch(e) {}
+
+    if (savedFb && savedFb.apiKey) {
+      initFirebaseFirestore(savedFb).then((ok) => {
+        if (!ok) initCloudBroker();
+      });
+    } else {
+      initCloudBroker();
+    }
+
+    function syncState() {
+      localStorage.setItem('sem_state', JSON.stringify(session));
+      if (window.dbWriteState) window.dbWriteState(session);
+      publishCloud('SESSION', session, true);
+      if (localChannel) localChannel.postMessage({ type: 'SESSION', data: session });
+      render();
+    }
+
+    function syncVote(v) {
+      votes[userId] = { ...votes[userId], ...v, userId, ronda: session.ronda };
+      localStorage.setItem('sem_votes', JSON.stringify(votes));
+      if (window.dbWriteVote) window.dbWriteVote(votes[userId]);
+      publishCloud('VOTE', votes[userId]);
+      if (localChannel) localChannel.postMessage({ type: 'VOTE', data: votes[userId] });
+      render();
+    }
+
+    function updateLights(type) {
+      lightRed.className = 'light red' + (type === 'red' ? ' active' : '');
+      lightAmber.className = 'light amber' + (type === 'amber' ? ' active' : '');
+      lightGreen.className = 'light green' + (type === 'green' ? ' active' : '');
+    }
+
+    function render() {
+      const cur = PHASES[session.fase] || PHASES[0];
+      stageTag.innerText = cur.tag;
+      stageTitle.innerText = cur.title;
+      updateLights(cur.light);
+
+      const currentRoundVotes = Object.values(votes).filter(v => v.ronda === session.ronda);
+      voterCount.innerText = `Participantes activos: ${currentRoundVotes.length}`;
+
+      btnExample.style.display = (isHost && session.fase === 5) ? 'inline-flex' : 'none';
+
+      let html = '';
+      const myVote = votes[userId] || {};
+
+      if (cur.id === 0) {
+        html = `<p style="font-size:1.15rem; color:var(--text-muted);">${cur.desc}</p>`;
+        if (isHost) {
+          html += `<div style="margin-top:1.5rem; padding:1.25rem; border-radius:12px; background:rgba(99,102,241,0.1);">
+            <strong>Panel de proyección del taller:</strong> Comparte el código QR con el público y pulsa <b>Siguiente →</b> abajo cuando todos estén conectados.
+          </div>`;
+        }
+        voterFeedback.style.display = 'none';
+      }
+      else if (cur.isVote) {
+        html = `<p style="font-size:1.15rem; margin-bottom:1rem; color:var(--text-muted);">${cur.question}</p>`;
+        const voted = myVote[cur.key];
+
+        if (!isHost) {
+          html += `<div class="vote-grid">
+            <button class="vote-btn btn-evidencia ${voted === 'evidencia' ? 'selected' : ''}" onclick="window.sendVote('${cur.key}', 'evidencia')">
+              👍 Evidencia real
+            </button>
+            <button class="vote-btn btn-intencion ${voted === 'intencion' ? 'selected' : ''}" onclick="window.sendVote('${cur.key}', 'intencion')">
+              👎 Solo intención / falso
+            </button>
+          </div>`;
+          voterFeedback.style.display = voted ? 'block' : 'none';
+        } else {
+          const total = currentRoundVotes.filter(v => v[cur.key]).length;
+          const evCount = currentRoundVotes.filter(v => v[cur.key] === 'evidencia').length;
+          const inCount = currentRoundVotes.filter(v => v[cur.key] === 'intencion').length;
+          const evPct = total ? Math.round((evCount / total) * 100) : 0;
+          const inPct = total ? Math.round((inCount / total) * 100) : 0;
+
+          html += `<div class="results-wrap">
+            <p style="font-weight:700; color:var(--text-muted);">Votos recibidos en vivo (${total}):</p>
+            <div class="bar-row">
+              <div class="bar-meta"><span>👍 Evidencia real</span><span>${evCount} (${evPct}%)</span></div>
+              <div class="bar-track"><div class="bar-fill evidencia" style="width:${evPct}%;"></div></div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-meta"><span>👎 Solo intención / falso</span><span>${inCount} (${inPct}%)</span></div>
+              <div class="bar-track"><div class="bar-fill intencion" style="width:${inPct}%;"></div></div>
+            </div>
+          </div>`;
+          voterFeedback.style.display = 'none';
+        }
+      }
+      else if (cur.isResult) {
+        const total = currentRoundVotes.filter(v => v[cur.key]).length;
+        const evCount = currentRoundVotes.filter(v => v[cur.key] === 'evidencia').length;
+        const inCount = currentRoundVotes.filter(v => v[cur.key] === 'intencion').length;
+        const evPct = total ? Math.round((evCount / total) * 100) : 0;
+        const inPct = total ? Math.round((inCount / total) * 100) : 0;
+
+        html = `<div class="explanation-box">
+          <div style="font-weight:800; font-size:1.25rem; color:#ef4444; margin-bottom:0.4rem;">🚨 Veredicto: ${cur.verdict}</div>
+          <p>${cur.reason}</p>
+        </div>
+        <div class="results-wrap" style="margin-top:1.5rem;">
+          <h3 style="font-size:1.05rem; font-weight:700;">Distribución de votos (${total} personas):</h3>
+          <div class="bar-row">
+            <div class="bar-meta"><span>👍 Evidencia real</span><span>${evCount} (${evPct}%)</span></div>
+            <div class="bar-track"><div class="bar-fill evidencia" style="width:${evPct}%;"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-meta"><span>👎 Solo intención / falso</span><span>${inCount} (${inPct}%)</span></div>
+            <div class="bar-track"><div class="bar-fill intencion" style="width:${inPct}%;"></div></div>
+          </div>
+        </div>`;
+        voterFeedback.style.display = 'none';
+      }
+      else if (cur.isProposal) {
+        if (!isHost) {
+          const sentProp = myVote.propuesta;
+          html = `<p style="font-size:1.1rem; color:var(--text-muted); margin-bottom:1rem;">
+            Escribe un indicador concreto después de la feria para demostrar resultados tangibles:
+          </p>
+          <textarea class="proposal-area" id="propInput" maxlength="200" placeholder="Ej.: Cuántas personas asistieron, kilos de ropa intercambiados...">${sentProp || ''}</textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+            <span id="charCount" style="font-size:0.85rem; color:var(--text-muted);">${(sentProp || '').length}/200 caracteres</span>
+            <button class="host-btn primary" onclick="window.sendProposal()" style="min-height:48px; padding:0.5rem 1.5rem;">Enviar propuesta</button>
+          </div>`;
+        } else {
+          const proposals = currentRoundVotes.filter(v => v.propuesta && v.propuesta.trim().length > 0);
+          html = `<p style="font-size:1.1rem; color:var(--text-muted); margin-bottom:1rem;">
+            Propuestas enviadas por el público en vivo (${proposals.length}):
+          </p>`;
+
+          if (session.mostrarEjemplo) {
+            html += `<div class="explanation-box" style="margin-bottom:1.5rem; background:rgba(16,185,129,0.12); border-color:#10b981;">
+              <strong style="color:#10b981;">Ejemplo de evidencia real:</strong>
+              <p>“Ej.: número de prendas intercambiadas. Si dicen «intercambiamos 200 prendas», eso es evidencia de resultado.”</p>
+            </div>`;
+          }
+
+          if (proposals.length === 0) {
+            html += `<div style="padding:2rem; text-align:center; color:var(--text-muted); border:1px dashed var(--card-border); border-radius:12px;">Esperando las primeras propuestas del público…</div>`;
+          } else {
+            html += `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1rem;">`;
+            proposals.forEach((p, idx) => {
+              html += `<div style="padding:1rem; border-radius:12px; background:rgba(0,0,0,0.03); border:1px solid var(--card-border);">
+                <div style="font-size:0.75rem; font-weight:700; color:#6366f1; margin-bottom:0.3rem;">Propuesta #${idx + 1}</div>
+                <div style="font-size:1rem; font-weight:600;">${p.propuesta}</div>
+              </div>`;
+            });
+            html += `</div>`;
+          }
+        }
+        voterFeedback.style.display = 'none';
+      }
+
+      stageContent.innerHTML = html;
+
+      const ta = document.getElementById('propInput');
+      if (ta) {
+        ta.oninput = () => {
+          const c = document.getElementById('charCount');
+          if (c) c.innerText = `${ta.value.length}/200 caracteres`;
+        };
+      }
+    }
+
+    window.sendVote = (key, val) => {
+      syncVote({ [key]: val });
+    };
+
+    window.sendProposal = () => {
+      const ta = document.getElementById('propInput');
+      if (ta && ta.value.trim()) {
+        syncVote({ propuesta: ta.value.trim() });
+        alert('¡Propuesta enviada con éxito!');
+      }
+    };
+
+    document.getElementById('btnNext').onclick = () => {
+      if (session.fase < PHASES.length - 1) {
+        session.fase++;
+        syncState();
+      }
+    };
+
+    document.getElementById('btnPrev').onclick = () => {
+      if (session.fase > 0) {
+        session.fase--;
+        syncState();
+      }
+    };
+
+    document.getElementById('btnExample').onclick = () => {
+      session.mostrarEjemplo = !session.mostrarEjemplo;
+      syncState();
+    };
+
+    let resetTimer = null;
+    const btnReset = document.getElementById('btnReset');
+    btnReset.onclick = () => {
+      if (!btnReset.classList.contains('confirming')) {
+        btnReset.classList.add('confirming');
+        btnReset.innerText = '⚠️ Toca otra vez para confirmar';
+        resetTimer = setTimeout(() => {
+          btnReset.classList.remove('confirming');
+          btnReset.innerText = '🔄 Reiniciar';
+        }, 4000);
+      } else {
+        clearTimeout(resetTimer);
+        btnReset.classList.remove('confirming');
+        btnReset.innerText = '🔄 Reiniciar';
+        session.fase = 0;
+        session.ronda++;
+        session.mostrarEjemplo = false;
+        votes = {};
+        localStorage.removeItem('sem_votes');
+        publishCloud('RESET', session, true);
+        if (localChannel) localChannel.postMessage({ type: 'RESET', data: session });
+        syncState();
+      }
+    };
+
+    const btnInvite = document.getElementById('btnInvite');
+    btnInvite.onclick = () => {
+      qrModal.classList.add('open');
+      const cleanUrl = window.location.origin + window.location.pathname;
+      document.getElementById('inviteUrlInput').value = cleanUrl;
+      const target = document.getElementById('qrCodeTarget');
+      target.innerHTML = '';
+      if (window.QRCode) {
+        new QRCode(target, { text: cleanUrl, width: 200, height: 200 });
+      } else {
+        target.innerHTML = '<p>Enlace: ' + cleanUrl + '</p>';
+      }
+    };
+
+    document.getElementById('closeQrModal').onclick = () => qrModal.classList.remove('open');
+    document.getElementById('btnCopyLink').onclick = () => {
+      const input = document.getElementById('inviteUrlInput');
+      input.select();
+      navigator.clipboard.writeText(input.value);
+      alert('¡Enlace copiado al portapapeles!');
+    };
+
+    document.getElementById('hostLoginBtn').onclick = () => {
+      if (isHost) return;
+      const pin = prompt('Introduce la clave del anfitrión (por defecto: 1234):');
+      if (pin === '1234') {
+        sessionStorage.setItem('sem_host', 'true');
+        window.location.search = '?host=1234';
+      } else if (pin) {
+        alert('Clave incorrecta.');
+      }
+    };
+
+    document.getElementById('themeToggleBtn').onclick = () => {
+      document.documentElement.classList.toggle('dark');
+    };
+
+    // Modal de configuración de base de datos
+    const dbModal = document.getElementById('dbModal');
+    syncBadge.onclick = () => dbModal.classList.add('open');
+    document.getElementById('closeDbModal').onclick = () => dbModal.classList.remove('open');
+    document.getElementById('btnCancelDb').onclick = () => dbModal.classList.remove('open');
+    document.getElementById('btnSaveDb').onclick = () => {
+      const raw = document.getElementById('firebaseConfigInput').value.trim();
+      if (raw) {
+        try {
+          const cfg = JSON.parse(raw);
+          localStorage.setItem('sem_fb_cfg', JSON.stringify(cfg));
+          initFirebaseFirestore(cfg);
+          dbModal.classList.remove('open');
+          alert('Configuración guardada.');
+        } catch(e) {
+          alert('Formato JSON inválido. Pega las llaves en formato { "apiKey": "..." }');
+        }
+      }
+    };
+
+    render();
+  </script>
+</body>
+</html>
